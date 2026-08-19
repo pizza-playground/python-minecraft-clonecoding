@@ -41,8 +41,8 @@ class Window(pyglet.window.Window):
                         gl.GL_STATIC_DRAW
                         )
         
-        gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, 0)
-        gl.glEnableVertexAttribArray(1)
+        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, 0)
+        gl.glEnableVertexAttribArray(0)
         
         # Index buffer object 생성
         self.ibo = gl.GLuint(0)
@@ -55,10 +55,14 @@ class Window(pyglet.window.Window):
                         gl.GL_STATIC_DRAW
                         )
 
+        self.shader = shader.Shader("vert.glsl", "grag.glsl")
+
     def on_draw(self):
         # 프레임 렌더링 전 화면을 초기화
         gl.glClearColor(1.0, 0.0, 1.0, 1.0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+
+        self.shader.use()
         
         gl.glDrawElements(
             gl.GL_TRIANGLES,
@@ -74,14 +78,7 @@ class Window(pyglet.window.Window):
 
 class Game:
     def __init__(self):
-        # Minecraft 스타일의 3D 렌더링을 위해 OpenGL 3.x 컨텍스트 사용
-        self.config = gl.Config(
-            major_version=3,
-            minor_version=3
-        )
-
         self.window = Window(
-            config=self.config,
             width=800,
             height=600,
             caption="Minecraft clone",

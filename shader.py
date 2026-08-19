@@ -8,7 +8,7 @@ class Shader_error(Exception):
     def create_shader(target, source_path):
         
         # shader source 읽기
-        source_file = open(source_file, "rb")
+        source_file = open(source_path, "rb")
         source = source_file.read()
         source_file.close()
         
@@ -25,7 +25,7 @@ class Shader_error(Exception):
         gl.glCompileShader(target)
         
         # potential error 처리
-        log_length = gl.Glint(0)
+        log_length = gl.GLint(0)
         gl.glGetShaderiv(target, gl.GL_INFO_LOG_LENGTH, ctypes.byref(log_length))
         
         log_buffer = ctypes.create_string_buffer(log_length.value)
@@ -40,13 +40,13 @@ class Shader:
         
         # Vertex Shader 생성
         self.vert_shader = gl.glCreateShader(gl.GL_VERTEX_SHADER)
-        cretae_shader(self.vert_shader, vert_path)
+        Shader_error.create_shader(self.vert_shader, vert_path)
         gl.glAttachShader(self.program, self.vert_shader)
         
         
         # gragment shader 생성
-        self.frag_shader = gl.glCreateSHader(gl.GL_FRAGMENT_SHADER)
-        creat_shader(self.frag_shader, frag_path)
+        self.frag_shader = gl.glCreateShader(gl.GL_FRAGMENT_SHADER)
+        Shader_error.create_shader(self.frag_shader, frag_path)
         gl.glAttachShader(self.program, self.frag_shader)
         
         # 프로그램 링크 & 클린업
