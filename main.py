@@ -7,6 +7,8 @@ pyglet.options["debug_gl"] = False
 
 import pyglet.gl as gl
 
+import shader
+
 vertex_positions = [
     -0.5,    0.5,    1.0,
     -0.5,   -0.5,    1.0,
@@ -39,8 +41,8 @@ class Window(pyglet.window.Window):
                         gl.GL_STATIC_DRAW
                         )
         
-        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, 0)
-        gl.glEnableVertexAttribArray(0)
+        gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, 0)
+        gl.glEnableVertexAttribArray(1)
         
         # Index buffer object 생성
         self.ibo = gl.GLuint(0)
