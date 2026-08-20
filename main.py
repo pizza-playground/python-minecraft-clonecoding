@@ -10,10 +10,20 @@ import pyglet.gl as gl
 import matrix
 import shader
 import math
+import block_type
 
 class Window(pyglet.window.Window):
     def __init__(self, **args):
         super(Window, self).__init__(**args)
+
+        # blocks 생성
+        self.cobblestone = block_type.Block_type("cobblestone", {"all":"cobblestone"})
+        self.grass = block_type.Block_type("grass", {"top":"grass", "bottom":"dirt","sides":"grass_side"})
+        self.dirt = block_type.Block_type("dirt", {"all":"dirt"})
+        self.stone = block_type.Block_type("stone", {"all":"stone"})
+        self.sand = block_type.Block_type("sand",{"all":"sand"})
+        self.planks = block_type.Block_type("planks",{"all":"planks"})
+        self.log = block_type.Block_type("log",{"top":"log_top","bottom":"log_top","sides":"log_side"})
 
         # Vertex Array Object 생성
         self.vao = gl.GLuint(0)
@@ -26,8 +36,8 @@ class Window(pyglet.window.Window):
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
         
         gl.glBufferData(gl.GL_ARRAY_BUFFER,
-                        ctypes.sizeof(gl.GLfloat * len(vertex_positions)),
-                        (gl.GLfloat * len(vertex_positions)) (*vertex_positions),
+                        ctypes.sizeof(gl.GLfloat * len(self.grass.vertex_positions)),
+                        (gl.GLfloat * len(self.grass.vertex_positions)) (*self.grass.vertex_positions),
                         gl.GL_STATIC_DRAW
                         )
         
@@ -40,8 +50,8 @@ class Window(pyglet.window.Window):
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ibo)
 
         gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,
-                        ctypes.sizeof(gl.GLuint * len(indices)),
-                        (gl.GLuint * len(indices)) (*indices),
+                        ctypes.sizeof(gl.GLuint * len(self.grass.indices)),
+                        (gl.GLuint * len(self.grass.indices)) (*self.grass.indices),
                         gl.GL_STATIC_DRAW
                         )
 
@@ -68,7 +78,7 @@ class Window(pyglet.window.Window):
         
         # modelview matrix 생성
         self.mv_matrix.load_identity()
-        self.mv_matrix.translate(0, 0, -1)
+        self.mv_matrix.translate(0, 0, -3)
         self.mv_matrix.rotate_2d(self.x, math.sin(self.x / 3 * 2) / 2)
         
         # modelviewprojection matrix
@@ -76,13 +86,13 @@ class Window(pyglet.window.Window):
         self.shader.use()
         self.shader.uniform_matrix(self.shader_matrix_location, mvp_matrix)
         
-        # 아무거나 그리기w
+        # 아무거나 그리기
         gl.glClearColor(1.0, 0.0, 1.0, 1.0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,
-            len(indices),
+            len(self.grass.indices),
             gl.GL_UNSIGNED_INT,
             None
         )
