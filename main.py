@@ -7,13 +7,15 @@ pyglet.options["debug_gl"] = False
 
 import pyglet.gl as gl
 
+import matrix
 import shader
+import math
 
 vertex_positions = [
-    -0.5,    0.5,    1.0,
-    -0.5,   -0.5,    1.0,
-    0.5,    -0.5,    1.0,
-    0.5,     0.5,    1.0,
+    -0.5,    0.5,    0.0,
+    -0.5,   -0.5,    0.0,
+    0.5,    -0.5,    0.0,
+    0.5,     0.5,    0.0,
 ]
 
 indices = [
@@ -55,15 +57,41 @@ class Window(pyglet.window.Window):
                         gl.GL_STATIC_DRAW
                         )
 
+        # shader 생성
         self.shader = shader.Shader("vert.glsl", "grag.glsl")
+        self.shader_matrix_location = self.shader.find_uniform(b"matrix")
+        self.shader.use()
+
+        # matrices 생성
+        self.mv_matrix = matrix.Matrix()
+        self.p_matrix = matrix.Matrix()
+        
+        self.x = 0
+        pyglet.clock.schedule_interval(self.update, 1.0/60)
+        
+    def update(self, delta_time):
+        self.x += delta_time
 
     def on_draw(self):
-        # 프레임 렌더링 전 화면을 초기화
+        
+        # projection matrix 생성
+        self.p_matrix.load_identity()
+        self.p_matrix.perspective(90, float(self.width) / self.height, 0.1, 500)
+        
+        # modelview matrix 생성
+        self.mv_matrix.load_identity()
+        self.mv_matrix.translate(0, 0, -1)
+        self.mv_matrix.rotate_2d(self.x, math.sin(self.x / 3 * 2) / 2)
+        
+        # modelviewprojection matrix
+        mvp_matrix = self.p_matrix * self.mv_matrix
+        self.shader.use()
+        self.shader.uniform_matrix(self.shader_matrix_location, mvp_matrix)
+        
+        # 아무거나 그리기
         gl.glClearColor(1.0, 0.0, 1.0, 1.0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-        self.shader.use()
-        
         gl.glDrawElements(
             gl.GL_TRIANGLES,
             len(indices),

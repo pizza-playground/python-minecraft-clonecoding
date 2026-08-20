@@ -58,5 +58,14 @@ class Shader:
     def __del__(self):
         gl.glDeleteProgram(self.program)
         
+    def find_uniform(self, name):
+        return gl.glGetUniformLocation(self.program, ctypes.create_string_buffer(name))
+
+    def uniform_matrix(self, location, matrix):
+        matrix_data = (gl.GLfloat * 16)(
+            *(value for row in matrix.data for value in row)
+        )
+        gl.glUniformMatrix4fv(location, 1, gl.GL_FALSE, matrix_data)
+        
     def use(self):
         gl.glUseProgram(self.program)
