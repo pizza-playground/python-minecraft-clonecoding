@@ -33,12 +33,12 @@ class Window(pyglet.window.Window):
         # Vertex Array Object 생성
         self.vao = gl.GLuint(0)
         gl.glGenVertexArrays(1, ctypes.byref(self.vao))
-        gl.glBindVertexArray(self.vao)
+        gl.glBindVertexArray(self.vao)        
         
-        # Vertex Buffer Object 생성
-        self.vbo = gl.GLuint(0)
-        gl.glGenBuffers(1, ctypes.byref(self.vbo))
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
+        # Vertex position vbo 생성
+        self.vertex_position_vbo = gl.GLuint(0)
+        gl.glGenBuffers(1, ctypes.byref(self.vertex_position_vbo))
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertex_position_vbo)
         
         gl.glBufferData(gl.GL_ARRAY_BUFFER,
                         ctypes.sizeof(gl.GLfloat * len(self.grass.vertex_positions)),
@@ -48,6 +48,21 @@ class Window(pyglet.window.Window):
         
         gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, 0)
         gl.glEnableVertexAttribArray(0)
+        
+        # Tex Coord vbo 생성
+        self.tex_coord_vbo = gl.GLuint(0)
+        gl.glGenBuffers(1, ctypes.byref(self.tex_coord_vbo))
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.tex_coord_vbo)
+
+        gl.glBufferData(
+            gl.GL_ARRAY_BUFFER,
+            ctypes.sizeof(gl.GLfloat * len(self.grass.tex_coords)),
+            (gl.GLfloat * len(self.grass.tex_coords))(*self.grass.tex_coords),
+            gl.GL_STATIC_DRAW,
+        )
+        
+        gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, 0)
+        gl.glEnableVertexAttribArray(1)
         
         # Index buffer object 생성
         self.ibo = gl.GLuint(0)
@@ -61,7 +76,7 @@ class Window(pyglet.window.Window):
                         )
 
         # shader 생성
-        self.shader = shader.Shader("vert.glsl", "grag.glsl")
+        self.shader = shader.Shader("vert.glsl", "frag.glsl")
         self.shader_matrix_location = self.shader.find_uniform(b"matrix")
         self.shader_sampler_location = self.shader.find_uniform(b"texture_array_sampler")
         self.shader.use()
@@ -98,8 +113,9 @@ class Window(pyglet.window.Window):
         gl.glUniform1i(self.shader_sampler_location, 0 )
         
         # 아무거나 그리기
-        gl.glClearColor(1.0, 0.0, 1.0, 1.0)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glClearColor(0.0, 0.0, 0.0, 1.0)
+        self.clear()
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,
@@ -115,7 +131,11 @@ class Window(pyglet.window.Window):
 
 class Game:
     def __init__(self):
+        self.config = gl.Config(
+            double_buffer=True, major_version=3, minor_version=3, depth_size=16
+        )
         self.window = Window(
+            config=self.config,
             width=800,
             height=600,
             caption="Minecraft clone",
