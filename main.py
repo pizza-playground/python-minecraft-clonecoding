@@ -66,6 +66,23 @@ class Window(pyglet.window.Window):
         gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, 0)
         gl.glEnableVertexAttribArray(1)
         
+        # shading valeus vbo 생성
+        self.shading_values_vbo = gl.GLuint(0)
+        gl.glGenBuffers(1, ctypes.byref(self.shading_values_vbo))
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.shading_values_vbo)
+
+        gl.glBufferData(
+            gl.GL_ARRAY_BUFFER,
+            ctypes.sizeof(gl.GLfloat * len(self.grass.shading_values)),
+            (gl.GLfloat * len(self.grass.shading_values))(*self.grass.shading_values),
+            gl.GL_STATIC_DRAW,
+        )
+        
+        gl.glVertexAttribPointer(2, 1, gl.GL_FLOAT, gl.GL_FALSE, 0, 0)
+        gl.glEnableVertexAttribArray(2)
+        
+        
+        
         # Index buffer object 생성
         self.ibo = gl.GLuint(0)
         gl.glGenBuffers(1, ctypes.byref(self.ibo))
@@ -160,7 +177,7 @@ class Window(pyglet.window.Window):
         if key == pyglet.window.key.S: self.camera.input[2] += 1
         
         if key == pyglet.window.key.SPACE: self.camera.input[1] -= 1
-        if key == pyglet.window.key.LSHIFT: self.camera.input[1] += self.camera.update_camera(delta_time)
+        if key == pyglet.window.key.LSHIFT: self.camera.input[1] += 1
         
 
 class Game:

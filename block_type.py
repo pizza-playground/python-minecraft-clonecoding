@@ -7,6 +7,7 @@ class Block_type:
         self.vertex_positions = numbers.vertex_positions
         self.indices = numbers.indices
         self.tex_coords = numbers.tex_coords.copy()
+        self.shading_values = numbers.shading_values
 
         def set_block_face(face, texture_index):
             for vertex in range(4):
