@@ -84,9 +84,11 @@ class Window(pyglet.window.Window):
         # matrices 생성
         self.mv_matrix = matrix.Matrix()
         self.p_matrix = matrix.Matrix()
-        
+         
+        # pyglet  
         self.x = 0
         pyglet.clock.schedule_interval(self.update, 1.0/60)
+        self.mouse_captured = False
         
     def update(self, delta_time):
         self.x += delta_time
@@ -128,6 +130,10 @@ class Window(pyglet.window.Window):
         print(f"resize {width} * {height}")
         gl.glViewport(0, 0, width, height)
 
+    def on_mouse_press(self, x, y, button, modifiers):
+        self.mouse_captured = not self.mouse_captured
+        self.set_exclusive_mouse(self.mouse_captured)
+    
 
 class Game:
     def __init__(self):
