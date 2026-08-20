@@ -1,0 +1,35 @@
+import math
+import matrix
+
+
+class Camera:
+    def __init__(self, shader, width, height):
+        self.width = width
+        self.height = height
+        
+        # matrices 생성
+        self.mv_matrix = matrix.Matrix()
+        self.p_matrix = matrix.Matrix()
+        
+        # shader
+        self.shader = shader
+        self.shader_matrix_location = self.shader.find_uniform(b"matrix")
+        
+        # camera variables
+        self.positions = [0, 0, -3]
+        self.rotation = [math.tau / 4, 0]
+        
+    def update_matrices(self):
+        # projection matrix 생성
+        self.p_matrix.load_identity()
+        self.p_matrix.perspective(90, float(self.width) / self.height, 0.1, 500)
+        
+        # modelview matrix 생성
+        self.mv_matrix.load_identity()
+        self.mv_matrix.translate(-self.positions[0], -self.positions[1], self.positions[2])
+        self.mv_matrix.rotate_2d(-(self.rotation[0] - math.tau / 4), -self.rotation[1])
+        
+        # modelviewprojection matrix
+        mvp_matrix = self.p_matrix * self.mv_matrix
+        self.shader.uniform_matrix(self.shader_matrix_location, mvp_matrix)
+        

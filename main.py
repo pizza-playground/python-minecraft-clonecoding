@@ -10,6 +10,8 @@ import pyglet.gl as gl
 
 import matrix
 import shader
+import camera
+
 import block_type
 import texture_manager
 
@@ -77,7 +79,6 @@ class Window(pyglet.window.Window):
 
         # shader 생성
         self.shader = shader.Shader("vert.glsl", "frag.glsl")
-        self.shader_matrix_location = self.shader.find_uniform(b"matrix")
         self.shader_sampler_location = self.shader.find_uniform(b"texture_array_sampler")
         self.shader.use()
 
@@ -85,30 +86,20 @@ class Window(pyglet.window.Window):
         self.mv_matrix = matrix.Matrix()
         self.p_matrix = matrix.Matrix()
          
-        # pyglet  
-        self.x = 0
+        # pyglet 작업
         pyglet.clock.schedule_interval(self.update, 1.0/60)
         self.mouse_captured = False
         
+        # camera 작업
+        self.camera = camera.Camera(self.shader, self.width, self.height)
+        
     def update(self, delta_time):
-        self.x += delta_time
+        pass
 
     def on_draw(self):
-        
-        # projection matrix 생성
-        self.p_matrix.load_identity()
-        self.p_matrix.perspective(90, float(self.width) / self.height, 0.1, 500)
-        
-        # modelview matrix 생성
-        self.mv_matrix.load_identity()
-        self.mv_matrix.translate(0, 0, -3)
-        self.mv_matrix.rotate_2d(self.x, math.sin(self.x / 3 * 2) / 2)
-        
-        # modelviewprojection matrix
-        mvp_matrix = self.p_matrix * self.mv_matrix
-        self.shader.use()
-        self.shader.uniform_matrix(self.shader_matrix_location, mvp_matrix)
-        
+
+        self.camera.update_matrices()
+
         # bind texture
         gl.glActiveTexture(gl.GL_TEXTURE0)
         gl.glBindTexture(gl.GL_TEXTURE_2D_ARRAY, self.texture_manager.texture_array)
@@ -129,11 +120,24 @@ class Window(pyglet.window.Window):
     def on_resize(self, width, height):
         print(f"resize {width} * {height}")
         gl.glViewport(0, 0, width, height)
+        
+        self.camera.width = width
+        self.camera.height = height
 
     def on_mouse_press(self, x, y, button, modifiers):
         self.mouse_captured = not self.mouse_captured
         self.set_exclusive_mouse(self.mouse_captured)
     
+
+    def on_mouse_motion(self, x, y, delta_x, delta_y):
+        if self.mouse_captured:
+            sensitivity = 0.004
+            
+            self.camera.rotation[0] -= delta_x * sensitivity
+            self.camera.rotation[1] += delta_y * sensitivity
+            
+            self.camera.rotation[1] = max(-math.tau / 4, min(math.tau / 4, self.camera.rotation[1]))
+
 
 class Game:
     def __init__(self):
