@@ -16,8 +16,23 @@ class Camera:
         self.shader_matrix_location = self.shader.find_uniform(b"matrix")
         
         # camera variables
+        
+        self.input = [0, 0, 0]
+        
         self.positions = [0, 0, -3]
         self.rotation = [math.tau / 4, 0]
+        
+    def update_camera(self, delta_time):
+        speed = 7
+        multiplier = speed * delta_time
+
+        self.positions[1] += self.input[1] * multiplier
+        
+        if self.input[0] or self.input[2]:
+            angle = self.rotation[0] + math.atan2(self.input[2], self.input[0]) - math.tau / 4
+            
+            self.positions[0] += math.cos(angle) * multiplier
+            self.positions[2] += math.sin(angle) * multiplier
         
     def update_matrices(self):
         # projection matrix 생성
@@ -26,8 +41,8 @@ class Camera:
         
         # modelview matrix 생성
         self.mv_matrix.load_identity()
-        self.mv_matrix.translate(-self.positions[0], -self.positions[1], self.positions[2])
         self.mv_matrix.rotate_2d(-(self.rotation[0] - math.tau / 4), -self.rotation[1])
+        self.mv_matrix.translate(-self.positions[0], -self.positions[1], self.positions[2])
         
         # modelviewprojection matrix
         mvp_matrix = self.p_matrix * self.mv_matrix

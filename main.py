@@ -94,7 +94,7 @@ class Window(pyglet.window.Window):
         self.camera = camera.Camera(self.shader, self.width, self.height)
         
     def update(self, delta_time):
-        pass
+        self.camera.update_camera(delta_time)
 
     def on_draw(self):
 
@@ -134,10 +134,34 @@ class Window(pyglet.window.Window):
             sensitivity = 0.004
             
             self.camera.rotation[0] -= delta_x * sensitivity
-            self.camera.rotation[1] += delta_y * sensitivity
+            self.camera.rotation[1] -= delta_y * sensitivity
             
             self.camera.rotation[1] = max(-math.tau / 4, min(math.tau / 4, self.camera.rotation[1]))
 
+    def on_key_press(self, key, modifiers):
+        if not self.mouse_captured:
+            return
+        
+        if key == pyglet.window.key.D: self.camera.input[0] += 1
+        if key == pyglet.window.key.A: self.camera.input[0] -= 1
+        if key == pyglet.window.key.W: self.camera.input[2] += 1
+        if key == pyglet.window.key.S: self.camera.input[2] -= 1
+        
+        if key == pyglet.window.key.SPACE: self.camera.input[1] += 1
+        if key == pyglet.window.key.LSHIFT: self.camera.input[1] -= 1
+        
+    def on_key_release(self, key, modifiers):
+        if not self.mouse_captured:
+            return
+                
+        if key == pyglet.window.key.D: self.camera.input[0] -= 1
+        if key == pyglet.window.key.A: self.camera.input[0] += 1
+        if key == pyglet.window.key.W: self.camera.input[2] -= 1
+        if key == pyglet.window.key.S: self.camera.input[2] += 1
+        
+        if key == pyglet.window.key.SPACE: self.camera.input[1] -= 1
+        if key == pyglet.window.key.LSHIFT: self.camera.input[1] += self.camera.update_camera(delta_time)
+        
 
 class Game:
     def __init__(self):
