@@ -1,5 +1,6 @@
 import ctypes
 import pyglet
+import math
 
 # OpenGL 컨텍스트 생성 시 불필요한 shadow window 비활성화
 pyglet.options["shadow_window"] = False
@@ -9,42 +10,59 @@ import pyglet.gl as gl
 
 import matrix
 import shader
-import math
-
-vertex_positions = [
-    -0.5,    0.5,    0.0,
-    -0.5,   -0.5,    0.0,
-    0.5,    -0.5,    0.0,
-    0.5,     0.5,    0.0,
-]
-
-indices = [
-    0, 1, 2,    # first triangle
-    0, 2, 3,    # second triangle
-]
+import block_type
+import texture_manager
 
 class Window(pyglet.window.Window):
     def __init__(self, **args):
         super(Window, self).__init__(**args)
 
+        # blocks 생성
+        self.texture_manager = texture_manager.Texture_manager(16,16,256)
+        
+        self.cobblestone = block_type.Block_type(self.texture_manager, "cobblestone", {"all":"cobblestone"})
+        self.grass = block_type.Block_type(self.texture_manager, "grass", {"top":"grass", "bottom":"dirt","sides":"grass_side"})
+        self.dirt = block_type.Block_type(self.texture_manager, "dirt", {"all":"dirt"})
+        self.stone = block_type.Block_type(self.texture_manager, "stone", {"all":"stone"})
+        self.sand = block_type.Block_type(self.texture_manager, "sand",{"all":"sand"})
+        self.planks = block_type.Block_type(self.texture_manager, "planks",{"all":"planks"})
+        self.log = block_type.Block_type(self.texture_manager, "log",{"top":"log_top","bottom":"log_top","sides":"log_side"})
+
+        self.texture_manager.generate_mipmaps()
+
         # Vertex Array Object 생성
         self.vao = gl.GLuint(0)
         gl.glGenVertexArrays(1, ctypes.byref(self.vao))
-        gl.glBindVertexArray(self.vao)
+        gl.glBindVertexArray(self.vao)        
         
-        # Vertex Buffer Object 생성
-        self.vbo = gl.GLuint(0)
-        gl.glGenBuffers(1, ctypes.byref(self.vbo))
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vbo)
+        # Vertex position vbo 생성
+        self.vertex_position_vbo = gl.GLuint(0)
+        gl.glGenBuffers(1, ctypes.byref(self.vertex_position_vbo))
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.vertex_position_vbo)
         
         gl.glBufferData(gl.GL_ARRAY_BUFFER,
-                        ctypes.sizeof(gl.GLfloat * len(vertex_positions)),
-                        (gl.GLfloat * len(vertex_positions)) (*vertex_positions),
+                        ctypes.sizeof(gl.GLfloat * len(self.grass.vertex_positions)),
+                        (gl.GLfloat * len(self.grass.vertex_positions)) (*self.grass.vertex_positions),
                         gl.GL_STATIC_DRAW
                         )
         
         gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, 0)
         gl.glEnableVertexAttribArray(0)
+        
+        # Tex Coord vbo 생성
+        self.tex_coord_vbo = gl.GLuint(0)
+        gl.glGenBuffers(1, ctypes.byref(self.tex_coord_vbo))
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, self.tex_coord_vbo)
+
+        gl.glBufferData(
+            gl.GL_ARRAY_BUFFER,
+            ctypes.sizeof(gl.GLfloat * len(self.grass.tex_coords)),
+            (gl.GLfloat * len(self.grass.tex_coords))(*self.grass.tex_coords),
+            gl.GL_STATIC_DRAW,
+        )
+        
+        gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, 0)
+        gl.glEnableVertexAttribArray(1)
         
         # Index buffer object 생성
         self.ibo = gl.GLuint(0)
@@ -52,14 +70,15 @@ class Window(pyglet.window.Window):
         gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, self.ibo)
 
         gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER,
-                        ctypes.sizeof(gl.GLuint * len(indices)),
-                        (gl.GLuint * len(indices)) (*indices),
+                        ctypes.sizeof(gl.GLuint * len(self.grass.indices)),
+                        (gl.GLuint * len(self.grass.indices)) (*self.grass.indices),
                         gl.GL_STATIC_DRAW
                         )
 
         # shader 생성
-        self.shader = shader.Shader("vert.glsl", "grag.glsl")
+        self.shader = shader.Shader("vert.glsl", "frag.glsl")
         self.shader_matrix_location = self.shader.find_uniform(b"matrix")
+        self.shader_sampler_location = self.shader.find_uniform(b"texture_array_sampler")
         self.shader.use()
 
         # matrices 생성
@@ -80,7 +99,7 @@ class Window(pyglet.window.Window):
         
         # modelview matrix 생성
         self.mv_matrix.load_identity()
-        self.mv_matrix.translate(0, 0, -1)
+        self.mv_matrix.translate(0, 0, -3)
         self.mv_matrix.rotate_2d(self.x, math.sin(self.x / 3 * 2) / 2)
         
         # modelviewprojection matrix
@@ -88,13 +107,19 @@ class Window(pyglet.window.Window):
         self.shader.use()
         self.shader.uniform_matrix(self.shader_matrix_location, mvp_matrix)
         
+        # bind texture
+        gl.glActiveTexture(gl.GL_TEXTURE0)
+        gl.glBindTexture(gl.GL_TEXTURE_2D_ARRAY, self.texture_manager.texture_array)
+        gl.glUniform1i(self.shader_sampler_location, 0 )
+        
         # 아무거나 그리기
-        gl.glClearColor(1.0, 0.0, 1.0, 1.0)
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glClearColor(0.0, 0.0, 0.0, 1.0)
+        self.clear()
 
         gl.glDrawElements(
             gl.GL_TRIANGLES,
-            len(indices),
+            len(self.grass.indices),
             gl.GL_UNSIGNED_INT,
             None
         )
@@ -106,7 +131,11 @@ class Window(pyglet.window.Window):
 
 class Game:
     def __init__(self):
+        self.config = gl.Config(
+            double_buffer=True, major_version=3, minor_version=3, depth_size=16
+        )
         self.window = Window(
+            config=self.config,
             width=800,
             height=600,
             caption="Minecraft clone",
