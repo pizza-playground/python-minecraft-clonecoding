@@ -1,5 +1,6 @@
 import ctypes
 import pyglet
+import math
 
 # OpenGL 컨텍스트 생성 시 불필요한 shadow window 비활성화
 pyglet.options["shadow_window"] = False
@@ -9,21 +10,25 @@ import pyglet.gl as gl
 
 import matrix
 import shader
-import math
 import block_type
+import texture_manager
 
 class Window(pyglet.window.Window):
     def __init__(self, **args):
         super(Window, self).__init__(**args)
 
         # blocks 생성
-        self.cobblestone = block_type.Block_type("cobblestone", {"all":"cobblestone"})
-        self.grass = block_type.Block_type("grass", {"top":"grass", "bottom":"dirt","sides":"grass_side"})
-        self.dirt = block_type.Block_type("dirt", {"all":"dirt"})
-        self.stone = block_type.Block_type("stone", {"all":"stone"})
-        self.sand = block_type.Block_type("sand",{"all":"sand"})
-        self.planks = block_type.Block_type("planks",{"all":"planks"})
-        self.log = block_type.Block_type("log",{"top":"log_top","bottom":"log_top","sides":"log_side"})
+        self.texture_manager = texture_manager.Texture_manager(16,16,256)
+        
+        self.cobblestone = block_type.Block_type(self.texture_manager, "cobblestone", {"all":"cobblestone"})
+        self.grass = block_type.Block_type(self.texture_manager, "grass", {"top":"grass", "bottom":"dirt","sides":"grass_side"})
+        self.dirt = block_type.Block_type(self.texture_manager, "dirt", {"all":"dirt"})
+        self.stone = block_type.Block_type(self.texture_manager, "stone", {"all":"stone"})
+        self.sand = block_type.Block_type(self.texture_manager, "sand",{"all":"sand"})
+        self.planks = block_type.Block_type(self.texture_manager, "planks",{"all":"planks"})
+        self.log = block_type.Block_type(self.texture_manager, "log",{"top":"log_top","bottom":"log_top","sides":"log_side"})
+
+        self.texture_manager.generate_mipmaps()
 
         # Vertex Array Object 생성
         self.vao = gl.GLuint(0)
@@ -58,6 +63,7 @@ class Window(pyglet.window.Window):
         # shader 생성
         self.shader = shader.Shader("vert.glsl", "grag.glsl")
         self.shader_matrix_location = self.shader.find_uniform(b"matrix")
+        self.shader_sampler_location = self.shader.find_uniform(b"texture_array_sampler")
         self.shader.use()
 
         # matrices 생성
@@ -85,6 +91,11 @@ class Window(pyglet.window.Window):
         mvp_matrix = self.p_matrix * self.mv_matrix
         self.shader.use()
         self.shader.uniform_matrix(self.shader_matrix_location, mvp_matrix)
+        
+        # bind texture
+        gl.glActiveTexture(gl.GL_TEXTURE0)
+        gl.glBindTexture(gl.GL_TEXTURE_2D_ARRAY, self.texture_manager.texture_array)
+        gl.glUniform1i(self.shader_sampler_location, 0 )
         
         # 아무거나 그리기
         gl.glClearColor(1.0, 0.0, 1.0, 1.0)
