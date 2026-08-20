@@ -11,18 +11,6 @@ import matrix
 import shader
 import math
 
-vertex_positions = [
-    -0.5,    0.5,    0.0,
-    -0.5,   -0.5,    0.0,
-    0.5,    -0.5,    0.0,
-    0.5,     0.5,    0.0,
-]
-
-indices = [
-    0, 1, 2,    # first triangle
-    0, 2, 3,    # second triangle
-]
-
 class Window(pyglet.window.Window):
     def __init__(self, **args):
         super(Window, self).__init__(**args)
@@ -88,7 +76,7 @@ class Window(pyglet.window.Window):
         self.shader.use()
         self.shader.uniform_matrix(self.shader_matrix_location, mvp_matrix)
         
-        # 아무거나 그리기
+        # 아무거나 그리기w
         gl.glClearColor(1.0, 0.0, 1.0, 1.0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
