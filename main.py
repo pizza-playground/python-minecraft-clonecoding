@@ -84,15 +84,14 @@ class Window(pyglet.window.Window):
         self.mv_matrix.rotate_2d(self.x, math.sin(self.x / 3 * 2) / 2)
         
         # modelviewprojection matrix
-        mvp_matrix = self.mv_matrix * self.p_matrix
+        mvp_matrix = self.p_matrix * self.mv_matrix
+        self.shader.use()
         self.shader.uniform_matrix(self.shader_matrix_location, mvp_matrix)
         
         # 아무거나 그리기
         gl.glClearColor(1.0, 0.0, 1.0, 1.0)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
 
-        self.shader.use()
-        
         gl.glDrawElements(
             gl.GL_TRIANGLES,
             len(indices),
